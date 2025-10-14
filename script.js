@@ -228,4 +228,5 @@ function exportToExcel() {
 
     console.log('Requesting template:', templatePath);
     request.send();
+
 }
