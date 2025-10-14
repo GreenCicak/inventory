@@ -72,7 +72,7 @@ async function addProduct() {
 
         // Send data to ngrok URL with correct endpoint
         try {
-            const response = await fetch('  https://terina-unrefracted-elbert.ngrok-free.dev  ', {
+            const response = await fetch('https://terina-unrefracted-elbert.ngrok-free.dev/add-inventory', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -203,7 +203,7 @@ function exportToExcel() {
             // Generate automatic filename based on current date
             const dateInput = document.getElementById('reportDate').value;
             const [year, month, day] = dateInput.split('-');
-            const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+            const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'SEP', 'OCT', 'NOV', 'DEC'];
             const fileDate = `${day.padStart(2, '0')}-${months[parseInt(month) - 1]}-${year}`;
             const fileName = `Inventory Report ${fileDate}.xlsx`;
             console.log('Attempting to write file:', fileName);
