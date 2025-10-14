@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inventory Report</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="logo.png" alt="Company Logo" class="logo">
+            <h1 class="title">Inventory Report</h1>
+        </div>
+
+        <div class="form-section">
+            <div style="flex: 1;">
+                <h2>Product Use <input type="date" id="reportDate" class="date-picker"></h2>
+                <div class="form-group">
+                    <label>Select Product:</label>
+                    <select id="productSelect">
+                        <optgroup label="Grains">
+                            <option value="tepung">Tepung (Flour)</option>
+                            <option value="beras">Beras (Rice)</option>
+                        </optgroup>
+                        <optgroup label="Sweeteners">
+                            <option value="gula">Gula (Sugar)</option>
+                            <option value="madu">Madu (Honey)</option>
+                            <option value="susu">Susu (Milk)</option>
+                        </optgroup>
+                        <optgroup label="Oils">
+                            <option value="minyak">Minyak (Oil)</option>
+                            <option value="mentega">Mentega (Butter)</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Initial Quantity (kg):</label>
+                    <input type="number" id="initialQty" placeholder="Enter initial quantity" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Used Quantity (kg):</label>
+                    <input type="number" id="usedQty" placeholder="Enter used quantity" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Location:</label>
+                    <select id="location">
+                        <option value="">Select Location</option>
+                        <option value="Warehouse A">Warehouse A</option>
+                        <option value="Warehouse B">Warehouse B</option>
+                    </select>
+                </div>
+            </div>
+            <div style="flex: 0 0 auto;">
+                <button class="submit-btn" onclick="addProduct()">Submit</button>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="inventoryTable">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Used Quantity (kg)</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <button class="export-btn" onclick="exportToExcel()">Export to Excel</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
