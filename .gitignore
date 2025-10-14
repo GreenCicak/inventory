@@ -3,3 +3,4 @@ backend/
 node_modules/ 
 inventory_data.json 
 Inventory_Template.xlsx 
+~$* 
