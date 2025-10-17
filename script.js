@@ -72,6 +72,7 @@ async function addProduct() {
 
         // Send data to ngrok URL with correct endpoint
         try {
+            console.log('Sending data to server:', JSON.stringify(dataToSend, null, 2)); // Log sent data
             const response = await fetch('https://terina-unrefracted-elbert.ngrok-free.dev/add-inventory', {
                 method: 'POST',
                 headers: {
@@ -109,16 +110,15 @@ async function exportToExcel() {
     try {
         console.log('Starting export process...');
         const response = await fetch('https://terina-unrefracted-elbert.ngrok-free.dev/export', {
-            method: 'GET' // Matches the server route
-            // Removed 'Content-Type': 'application/json' as it’s unnecessary for GET
+            method: 'GET'
         });
 
         console.log('Export response status:', response.status, response.statusText);
 
         if (response.ok) {
             const blob = await response.blob();
-            console.log('Blob received, size:', blob.size, 'bytes'); // Debug blob size
-            console.log('Blob type:', blob.type); // Debug blob type
+            console.log('Blob received, size:', blob.size, 'bytes');
+            console.log('Blob type:', blob.type);
 
             if (blob.size === 0) {
                 throw new Error('Empty blob received from server');
