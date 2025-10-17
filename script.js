@@ -109,14 +109,11 @@ async function exportToExcel() {
     try {
         console.log('Starting export process...');
         const response = await fetch('https://terina-unrefracted-elbert.ngrok-free.dev/export', {
-            method: 'GET', // Matches the server route
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            method: 'GET' // Matches the server route
+            // Removed 'Content-Type': 'application/json' as it’s unnecessary for GET
         });
 
         console.log('Export response status:', response.status, response.statusText);
-        console.log('Export response headers:', Object.fromEntries(response.headers)); // Log all headers
 
         if (response.ok) {
             const blob = await response.blob();
