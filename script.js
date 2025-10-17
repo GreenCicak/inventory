@@ -115,15 +115,14 @@ function exportToExcel() {
         return;
     }
 
-    // Define headers based on "StockIssue" template (16 columns)
     const headers = [
         'DOCNO', 'DOCDATE', 'DESCRIPTION_HDR', 'DOCAMT', 'REASON',
         'REMARK', 'ITEMCODE', 'LOCATION', 'BATCH', 'PROJECT',
         'DESCRIPTION_DTL', 'QTY', 'UOM', 'AMOUNT', 'REMARK1', 'REMARK2'
     ];
 
-    // Load the template file
-    const templatePath = './Inventory_Template.xlsx';
+    // Load the template file from ngrok
+    const templatePath = 'https://terina-unrefracted-elbert.ngrok-free.dev/Inventory_Template.xlsx';
     const request = new XMLHttpRequest();
     request.open('GET', templatePath, true);
     request.responseType = 'arraybuffer';
@@ -134,38 +133,31 @@ function exportToExcel() {
             const data = new Uint8Array(request.response);
             const wb = XLSX.read(data, { type: 'array', cellStyles: true });
 
-            // Get the "StockIssue" sheet
             let ws = wb.Sheets['StockIssue'];
 
-            // Log the initial content of the sheet for debugging
             console.log('Initial sheet content:', ws);
 
-            // Clear all rows below header (row 1) to remove any residual data or notes
             const range = XLSX.utils.decode_range(ws['!ref'] || { s: { r: 0, c: 0 }, e: { r: 0, c: 15 } });
-            for (let r = 1; r <= range.e.r; r++) { // Start from row 2 to the end
+            for (let r = 1; r <= range.e.r; r++) {
                 for (let c = 0; c <= range.e.c; c++) {
-                    const cellAddress = XLSX.utils.encode_cell({ r: r, c: c });
-                    if (ws[cellAddress]) {
-                        delete ws[cellAddress]; // Remove all existing data and styles
-                    }
+                    const cellAddress = XLSX.utils.encode_cell({ r, c });
+                    if (ws[cellAddress]) delete ws[cellAddress];
                 }
             }
 
-            // Write headers on row 1 (A1)
-            const headerRow = 0; // 0-based index for row 1
+            const headerRow = 0;
             headers.forEach((header, colIndex) => {
                 const cellAddress = XLSX.utils.encode_cell({ r: headerRow, c: colIndex });
                 ws[cellAddress] = {
-                    v: header + (header.includes('(') ? '' : ''),
+                    v: header,
                     t: 's',
                     s: { font: { sz: 11, name: 'Calibri' }, alignment: { horizontal: 'left' } }
                 };
             });
 
-            // Write data starting from row 2 (A2)
-            const startRow = 1; // 0-based index for row 2
+            const startRow = 1;
             exportData.forEach((rowData, index) => {
-                const rowNum = startRow + index; // Start from row 2
+                const rowNum = startRow + index;
                 headers.forEach((header, colIndex) => {
                     const cellAddress = XLSX.utils.encode_cell({ r: rowNum, c: colIndex });
                     ws[cellAddress] = {
@@ -176,35 +168,19 @@ function exportToExcel() {
                 });
             });
 
-            // Update the range to include new data only (remove extra rows)
             const newRange = { s: { r: 0, c: 0 }, e: { r: startRow + exportData.length - 1, c: 15 } };
             ws['!ref'] = XLSX.utils.encode_range(newRange);
 
-            // Set column widths to match template exactly
             ws['!cols'] = [
-                { wch: 10.56 }, // A (DOCNO)
-                { wch: 10.56 }, // B (DOCDATE)
-                { wch: 22.11 }, // C (DESCRIPTION_HDR)
-                { wch: 7.22 },  // D (DOCAMT)
-                { wch: 10.89 }, // E (REASON)
-                { wch: 11.22 }, // F (REMARK)
-                { wch: 13.89 }, // G (ITEMCODE)
-                { wch: 13.11 }, // H (LOCATION)
-                { wch: 11.67 }, // I (BATCH)
-                { wch: 11.56 }, // J (PROJECT)
-                { wch: 20.56 }, // K (DESCRIPTION_DTL)
-                { wch: 7.22 },  // L (QTY)
-                { wch: 7.22 },  // M (UOM)
-                { wch: 7.22 },  // N (AMOUNT)
-                { wch: 13.56 }, // O (REMARK1)
-                { wch: 13.56 }  // P (REMARK2)
+                { wch: 10.56 }, { wch: 10.56 }, { wch: 22.11 }, { wch: 7.22 }, { wch: 10.89 },
+                { wch: 11.22 }, { wch: 13.89 }, { wch: 13.11 }, { wch: 11.67 }, { wch: 11.56 },
+                { wch: 20.56 }, { wch: 7.22 }, { wch: 7.22 }, { wch: 7.22 }, { wch: 13.56 }, { wch: 13.56 }
             ];
 
-            // Generate automatic filename based on current date
             const dateInput = document.getElementById('reportDate').value;
             const [year, month, day] = dateInput.split('-');
-            const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-            const fileDate = `${day.padStart(2, '0')}-${months[parseInt(month) - 1]}-${year}`;
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const fileDate = `${day.padStart(2, '0')} ${monthNames[parseInt(month) - 1]} ${year}`;
             const fileName = `Inventory Report ${fileDate}.xlsx`;
             console.log('Attempting to write file:', fileName);
 
@@ -216,17 +192,16 @@ function exportToExcel() {
                 alert('Export failed. Check console for details: ' + error.message);
             }
         } else {
-            alert('Failed to load Inventory_Template.xlsx. Ensure it exists in the same directory as index.html.');
+            alert('Failed to load Inventory_Template.xlsx. Ensure it exists on the server.');
             console.error('Template load failed:', request.status, request.statusText);
         }
     };
 
     request.onerror = function () {
-        alert('Error loading Inventory_Template.xlsx. Check the file path or server setup.');
+        alert('Error loading Inventory_Template.xlsx. Check the server setup.');
         console.error('Template load error:', request.statusText);
     };
 
     console.log('Requesting template:', templatePath);
     request.send();
-
 }
