@@ -72,7 +72,7 @@ async function addProduct() {
 
         // Send data to ngrok URL with correct endpoint
         try {
-            const response = await fetch('https://terina-unrefracted-elbert.ngrok-free.devv ', {
+            const response = await fetch('https://terina-unrefracted-elbert.ngrok-free.dev  ', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
