@@ -99,7 +99,7 @@ async function addProduct() {
     }
 }
 
-// Enhanced exportToExcel function to use server-side export
+// Enhanced exportToExcel function to use server-side export with blob size logging
 async function exportToExcel() {
     if (exportData.length === 0) {
         alert('No data to export.');
@@ -107,6 +107,7 @@ async function exportToExcel() {
     }
 
     try {
+        console.log('Starting export process...');
         const response = await fetch('https://terina-unrefracted-elbert.ngrok-free.dev/export', {
             method: 'GET', // Matches the server route
             headers: {
@@ -114,8 +115,17 @@ async function exportToExcel() {
             }
         });
 
+        console.log('Export response status:', response.status, response.statusText);
+
         if (response.ok) {
             const blob = await response.blob();
+            console.log('Blob received, size:', blob.size, 'bytes'); // Debug blob size
+            console.log('Blob type:', blob.type); // Debug blob type
+            
+            if (blob.size === 0) {
+                throw new Error('Empty blob received from server');
+            }
+
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
