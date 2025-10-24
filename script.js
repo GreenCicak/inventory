@@ -70,13 +70,13 @@ async function addProduct() {
 
         exportData.push(dataToSend);
 
-        // Send data to ngrok URL with correct endpoint
+        // Send data to ngrok URL with bypass header
         try {
-            console.log('Sending data to server:', JSON.stringify(dataToSend, null, 2)); // Log sent data
             const response = await fetch('https://terina-unrefracted-elbert.ngrok-free.dev/add-inventory', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'  // Bypass ngrok warning
                 },
                 body: JSON.stringify(dataToSend)
             });
@@ -94,13 +94,13 @@ async function addProduct() {
         initialQty.value = '';
         usedQty.value = '';
         document.getElementById('location').value = '';
-        productSelect.selectedIndex = 0; // Reset product select
+        productSelect.selectedIndex = 0;
     } else {
         alert('Please enter valid quantities (Initial ≥ Used ≥ 0).');
     }
 }
 
-// Enhanced exportToExcel function to use server-side export with blob size logging
+// Enhanced exportToExcel function with ngrok bypass
 async function exportToExcel() {
     if (exportData.length === 0) {
         alert('No data to export.');
@@ -110,7 +110,10 @@ async function exportToExcel() {
     try {
         console.log('Starting export process...');
         const response = await fetch('https://terina-unrefracted-elbert.ngrok-free.dev/export', {
-            method: 'GET'
+            method: 'GET',
+            headers: {
+                'ngrok-skip-browser-warning': 'true'  // Bypass ngrok warning
+            }
         });
 
         console.log('Export response status:', response.status, response.statusText);
