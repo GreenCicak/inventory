@@ -1,6 +1,35 @@
 let exportData = [];
 
-// Set current date on page load
+// Replace with your ngrok URL (example: https://abc123.ngrok.io)
+// For local testing: http://localhost:3000
+const serverUrl = 'http://localhost:3000'; // CHANGE THIS TO YOUR NGROK URL
+
+// Load data from server
+async function loadData() {
+    try {
+        const response = await fetch(`${serverUrl}/get-inventory`);
+        if (response.ok) {
+            exportData = await response.json();
+            updateTable();
+            console.log('Data loaded from server');
+        }
+    } catch (e) {
+        console.log('No server data – starting empty');
+    }
+}
+
+// Update table
+function updateTable() {
+    const tableBody = document.getElementById('tableBody');
+    tableBody.innerHTML = '';
+    exportData.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${item.DESCRIPTION_DTL}</td><td>${item.QTY}</td>`;
+        tableBody.appendChild(row);
+    });
+}
+
+// Set today's date
 document.addEventListener('DOMContentLoaded', function () {
     const dateInput = document.getElementById('reportDate');
     const today = new Date();
@@ -8,14 +37,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     dateInput.value = `${year}-${month}-${day}`;
+    loadData();
 });
 
-// Enhanced addProduct function with Location validation
+// Add product to server
 async function addProduct() {
     const productSelect = document.getElementById('productSelect');
     const initialQty = document.getElementById('initialQty');
     const usedQty = document.getElementById('usedQty');
-    const tableBody = document.getElementById('tableBody');
     const reportDate = document.getElementById('reportDate').value;
     const location = document.getElementById('location').value;
 
@@ -23,127 +52,81 @@ async function addProduct() {
     const initialValue = parseFloat(initialQty.value) || 0;
     const usedValue = parseFloat(usedQty.value) || 0;
 
-    if (!location || location === '') {
-        alert('Please select a Location.');
-        return;
-    }
+    if (!location) return alert('Pilih Lokasi.');
+    if (!initialQty.value || !usedQty.value) return alert('Isi kuantiti.');
+    if (initialValue < usedValue) return alert('Initial ≥ Used.');
 
-    if (!initialQty.value.trim() || !usedQty.value.trim()) {
-        alert('Please fill in both Initial Quantity and Used Quantity.');
-        return;
-    }
+    const docNo = `RC-${String(exportData.length + 1).padStart(4, '0')}`;
 
-    if (productName && initialValue >= 0 && usedValue >= 0 && initialValue >= usedValue) {
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td>${productName}</td>
-            <td>${usedValue.toFixed(2)}</td>
-        `;
-        tableBody.appendChild(newRow);
+    // FIXED: Removed invalid `report |`
+    const [year, month, day] = reportDate.split('-');
+    const excelDate = `${day}${month}${year}`;
 
-        const docNo = `RC-${String(exportData.length + 1).padStart(4, '0')}`;
-        const [year, month, day] = reportDate.split('-');
-        const excelDate = `${day}${month}${year}`;
-        const descriptionHdr = 'Stock Issue';
-        const itemCode = productName.split(' (')[0];
-        const qty = usedValue.toFixed(2);
-        const uom = 'UNIT';
-
-        const dataToSend = {
-            DOCNO: docNo,
-            DOCDATE: excelDate,
-            DESCRIPTION_HDR: descriptionHdr,
-            DOCAMT: '',
-            REASON: '',
-            REMARK: '',
-            ITEMCODE: itemCode,
-            LOCATION: location,
-            BATCH: '',
-            PROJECT: '',
-            DESCRIPTION_DTL: productName,
-            QTY: qty,
-            UOM: uom,
-            AMOUNT: '',
-            REMARK1: '',
-            REMARK2: ''
-        };
-
-        exportData.push(dataToSend);
-
-        // Send data to ngrok URL with bypass header
-        try {
-            const response = await fetch('https://terina-unrefracted-elbert.ngrok-free.dev/add-inventory', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'ngrok-skip-browser-warning': 'true'  // Bypass ngrok warning
-                },
-                body: JSON.stringify(dataToSend)
-            });
-            if (response.ok) {
-                console.log('Data saved to server');
-            } else {
-                console.error('Error saving data to server:', response.statusText);
-                alert('Error saving data to server. Data is still available locally for export.');
-            }
-        } catch (error) {
-            console.error('Error connecting to server:', error.message);
-            alert('Error connecting to server. Data is still available locally for export.');
-        }
-
-        initialQty.value = '';
-        usedQty.value = '';
-        document.getElementById('location').value = '';
-        productSelect.selectedIndex = 0;
-    } else {
-        alert('Please enter valid quantities (Initial ≥ Used ≥ 0).');
-    }
-}
-
-// Enhanced exportToExcel function with ngrok bypass
-async function exportToExcel() {
-    if (exportData.length === 0) {
-        alert('No data to export.');
-        return;
-    }
+    const dataToSend = {
+        DOCNO: docNo,
+        DOCDATE: excelDate,
+        DESCRIPTION_HDR: "Stock Issue",
+        ITEMCODE: productName.split(' (')[0],
+        LOCATION: location,
+        DESCRIPTION_DTL: productName,
+        QTY: usedValue.toFixed(2),
+        UOM: "UNIT"
+    };
 
     try {
-        console.log('Starting export process...');
-        const response = await fetch('https://terina-unrefracted-elbert.ngrok-free.dev/export', {
-            method: 'GET',
-            headers: {
-                'ngrok-skip-browser-warning': 'true'  // Bypass ngrok warning
-            }
+        const response = await fetch(`${serverUrl}/add-inventory`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataToSend)
         });
 
-        console.log('Export response status:', response.status, response.statusText);
-
         if (response.ok) {
-            const blob = await response.blob();
-            console.log('Blob received, size:', blob.size, 'bytes');
-            console.log('Blob type:', blob.type);
-
-            if (blob.size === 0) {
-                throw new Error('Empty blob received from server');
-            }
-
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const dateInput = document.getElementById('reportDate').value;
-            const [year, month, day] = dateInput.split('-');
-            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            const fileDate = `${day.padStart(2, '0')} ${monthNames[parseInt(month) - 1]} ${year}`;
-            a.download = `Inventory Report ${fileDate}.xlsx`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-            console.log('Export completed successfully');
+            await loadData(); // Refresh from server
+            alert('Data saved to server!');
         } else {
-            console.error('Export failed:', response.statusText);
-            alert('Export failed. Check console for details.');
+            alert('Failed to save to server.');
         }
-    } catch (error) {
-        console.error('Error during export:', error);
-        alert('Error during export. Check console for details: ' + error.message);
+    } catch (e) {
+        alert('Server connection failed: ' + e.message);
+    }
+
+    // Clear form
+    initialQty.value = '';
+    usedQty.value = '';
+    document.getElementById('location').value = '';
+    productSelect.selectedIndex = 0;
+}
+
+// Export Excel from server
+async function exportToExcel() {
+    const reportDate = document.getElementById('reportDate').value;
+    if (exportData.length === 0) return alert('No data to export.');
+
+    try {
+        const response = await fetch(`${serverUrl}/export?date=${reportDate}`);
+        if (!response.ok) throw new Error('No data or server error');
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        // Use filename from server
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let fileName = 'Inventory Report.xlsx';
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="(.+)"/);
+            if (match) fileName = match[1];
+        }
+
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        alert('Excel downloaded successfully!');
+    } catch (e) {
+        alert('Export failed: ' + e.message);
     }
 }
